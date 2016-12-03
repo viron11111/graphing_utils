@@ -28,6 +28,29 @@ class grapher(object):
 
 	def odom(self, data):
 		#rospy.logwarn(data.pose.pose.position.x)
+
+		if self.start_time == 0:
+			self.start_time = time.time()
+
+		quat = (
+			data.pose.pose.orientation.x,
+			data.pose.pose.orientation.y,
+			data.pose.pose.orientation.z,
+			data.pose.pose.orientation.w)
+
+		euler = tf.transformations.euler_from_quaternion(quat)
+		#rospy.logwarn("yaw: %f", euler[2])
+		
+		self.thruster1_file.writerow([self.time_diff, euler[0], euler[1], euler[2], data.pose.pose.position.x, data.pose.pose.position.y, data.pose.pose.position.z])
+
+		self.time_diff = time.time() - self.start_time
+
+	def odom_filtered(self, data):
+		#rospy.logwarn(data.pose.pose.position.x)
+
+		if self.start_time == 0:
+			self.start_time = time.time()
+
 		quat = (
 			data.pose.pose.orientation.x,
 			data.pose.pose.orientation.y,
@@ -42,7 +65,7 @@ class grapher(object):
 		self.time_diff = time.time() - self.start_time
 
 	def create_files(self):
-		self.start_time = time.time()
+		self.start_time = 0
 		self.time_diff = 0
 
 		date_time = strftime("%d_%m_%y_%H_%M_%S", localtime())
@@ -56,6 +79,8 @@ class grapher(object):
 		self.create_files()
 
 		rospy.Subscriber("odom", Odometry, self.odom)
+
+		rospy.Subscriber("odometry/filtered", Odometry, self.odom_filtered)
 		
 
 		rate = rospy.Rate(20)
